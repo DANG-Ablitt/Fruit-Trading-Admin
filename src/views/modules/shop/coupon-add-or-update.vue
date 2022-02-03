@@ -65,8 +65,47 @@
           <i class="el-icon-plus"></i>
         </el-upload>
       </el-form-item>
-      <el-form-item prop="detail" :label="$t('coupon.couponDetail')">
+      <!--<el-form-item prop="detail" :label="$t('coupon.couponDetail')">
         <el-input v-model="dataForm.detail" :placeholder="$t('coupon.couponDetail')"></el-input>
+      </el-form-item>-->
+      <el-form-item
+        v-for="(item, index) in dataForm.detailList"
+        :key="item.key"
+        :prop="`detailList.${index}.detail`"
+        :label="index === 0 ? $t('商品属性') : ''"
+        class="resource-list">
+        <el-row>
+          <el-col :span="4">
+            <el-input v-model="item.detail_name" :placeholder="$t('属性名')">
+              <!--
+                //这里暂时不引入复合型输入框
+                <el-select  v-model="item.select"  slot="prepend" placeholder="请选择" >
+                <el-option label="上市时间" value="上市时间"></el-option>
+                <el-option label="订单号" value="订单号"></el-option>
+                <el-option label="用户电话" value="用户电话"></el-option>
+                <el-option label="餐厅名" value="餐厅名"></el-option>
+                <el-option label="订单号" value="订单号"></el-option>
+                <el-option label="用户电话" value="用户电话"></el-option>
+                <el-option label="餐厅名" value="餐厅名"></el-option>
+                <el-option label="订单号" value="订单号"></el-option>
+                <el-option label="用户电话" value="用户电话"></el-option>
+                <el-option label="餐厅名" value="餐厅名"></el-option>
+                <el-option label="订单号" value="订单号"></el-option>
+                <el-option label="用户电话" value="用户电话"></el-option>
+              </el-select>-->
+            </el-input>
+          </el-col>
+          <el-col :span="18">
+            <el-input v-model="item.detail_info" :placeholder="$t('商品属性内容')">
+            </el-input>
+          </el-col>
+          <el-col :span="2" class="text-center">
+            <el-button @click="resourceDeleteHandle(item)" size="small" type="text">{{ $t('delete') }}</el-button>
+          </el-col>
+        </el-row>
+      </el-form-item>
+      <el-form-item :label="dataForm.detailList.length <= 0 ? $t('参数') : ''">
+        <el-button @click="resourceAddHandle()" class="aui-button--dashed w-percent-100">{{ $t('添加') }}</el-button>
       </el-form-item>
       <el-alert
         title="因商品的特殊性请仔细检查提交数据是否正确，一旦提交不可修改"
@@ -92,7 +131,7 @@ export default {
       dataForm: {
         id: '',
         name: '',
-        time0: null,
+        time0: [],
         time1: '',
         time2: '',
         type: '',
@@ -102,7 +141,7 @@ export default {
         amount2: '',
         pic: '',
         url: '',
-        detail: ''
+        detailList: []
       }
     }
   },
@@ -123,6 +162,8 @@ export default {
     init () {
       this.visible = true
       this.url = `${window.SITE_CONFIG['apiURL']}/oss/file/upload?token=${Cookies.get('token')}`
+      this.detailList = []
+      // this.dataForm.time0 = null
     },
     // 图片上传之前
     beforeUploadHandle (file) {
@@ -139,13 +180,25 @@ export default {
       // 将图片的访问地址填充到表单的url字段中
       this.dataForm.url = res.data.url
     },
+    // 添加商品属性
+    resourceAddHandle () {
+      this.dataForm.detailList.push({
+        key: new Date().getTime(),
+        detail_name: '',
+        detail_info: ''
+      })
+    },
+    // 删除商品属性
+    resourceDeleteHandle (resource) {
+      this.dataForm.detailList = this.dataForm.detailList.filter(item => item.key !== resource.key)
+    },
     // 表单提交
     dataFormSubmitHandle: debounce(function () {
       this.$refs['dataForm'].validate((valid) => {
         if (!valid) {
           return false
         }
-        this.$http[!this.dataForm.id ? 'post' : 'put']('/shop/coupon', this.dataForm).then(({ data: res }) => {
+        this.$http[!this.dataForm.id ? 'post' : 'put']('/shop/coupon/save', this.dataForm).then(({ data: res }) => {
           if (res.code !== 0) {
             return this.$message.error(res.msg)
           }
@@ -164,3 +217,12 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.resource-list {
+  .el-select .el-input__inner {
+    min-width: 110px;
+    text-align: center;
+  }
+}
+</style>
